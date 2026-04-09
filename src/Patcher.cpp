@@ -375,6 +375,8 @@ static void patch_file(const PatchSet& patch, const std::string& src_path, const
 
 	checksum_pe(data);
 	write_all_bytes(dst_path, data);
+	std::cout << "Patch successful! Press any key to exit...\n";
+	std::cin.get();
 }
 
 int main(int argc, char* argv[]) 
