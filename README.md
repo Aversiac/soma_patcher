@@ -17,6 +17,8 @@ Currently only supports Steam installs.
 - Ensure you have `Visual Studio 2017+` installed.
   
 - Open Visual Studio, and then choose 'Open a local folder'.
+
+- Navigate to the directory of the local repo and open that. (whether cloned or downloaded as a .zip)
   
 - Run the build the usual VS way (`Ctrl + B`) or navigate to the `CMakeLists.txt` file within Visual Studio and save it.
 
