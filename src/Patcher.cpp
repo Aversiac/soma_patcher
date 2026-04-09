@@ -381,12 +381,12 @@ int main(int argc, char* argv[])
 {
 	try
 	{
-		std::cout << "Welcome to the HPL3 Patcher!\n";
-		std::cout << "This program modifies SOMA's .exe files (Soma.exe/Soma_NoSteam.exe) to fix:\n";
+		std::cout << "Welcome to the SOMA Patcher!\n";
+		std::cout << "This program modifies the game's .exe files (Soma.exe/Soma_NoSteam.exe) to fix:\n";
 		std::cout << "- Crashes when loading saves on large maps\n";
-		std::cout << "- Texture streaming issues (black or low resolution textures)\n";
-		std::cout << "For full documentation/source code, see the GitHub repository: https://github.com/Aversiac/game_installer \n";
-		std::cout << "Press [ENTER/RETURN] to continue. \n";
+		std::cout << "- Texture streaming issues (broken or low resolution textures)\n";
+		std::cout << "For full documentation/source code, see the GitHub repository: https://github.com/Aversiac/soma_patcher \n";
+		std::cout << "Press [ENTER/RETURN] to continue... \n";
 	//	std::cout << "Apply patches? Input one of the following... Y (Yes) // N (No)\n";
 		// the patch is mandatory, should we really allow people to break their installs with a single keystroke?
 
