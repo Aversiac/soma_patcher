@@ -386,7 +386,7 @@ int main(int argc, char* argv[])
 		std::cout << "- Crashes when loading saves on large maps\n";
 		std::cout << "- Texture streaming issues (broken or low resolution textures)\n";
 		std::cout << "For full documentation/source code, see the GitHub repository: https://github.com/Aversiac/soma_patcher \n";
-		std::cout << "Press [ENTER/RETURN] to continue... \n";
+		std::cout << "Press [ENTER] to continue... \n";
 	//	std::cout << "Apply patches? Input one of the following... Y (Yes) // N (No)\n";
 		// the patch is mandatory, should we really allow people to break their installs with a single keystroke?
 
