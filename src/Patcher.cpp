@@ -395,8 +395,8 @@ int main(int argc, char* argv[])
 
 		//if (input == "y" || input == "Y")
 		{
-			patch_file(PATCH_NOSTEAM, "Soma_NoSteam.exe", "Soma_NoSteam_patched.exe");
-			patch_file(PATCH_STEAM, "Soma.exe", "Soma_patched.exe");
+			patch_file(PATCH_NOSTEAM, "Soma_NoSteam.exe", "Soma_NoSteam.exe");
+			patch_file(PATCH_STEAM, "Soma.exe", "Soma.exe");
 		}
 
 		return 0;
