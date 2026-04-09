@@ -18,7 +18,7 @@ Currently only supports Steam installs.
   
 - Open Visual Studio, and then choose 'Open a local folder'.
   
-- Run the build the usual VS way (`Ctrl + B`) or navigate to the `CMakeLists.txt` file and save it.
+- Run the build the usual VS way (`Ctrl + B`) or navigate to the `CMakeLists.txt` file within Visual Studio and save it.
 
 ## Linux
 
