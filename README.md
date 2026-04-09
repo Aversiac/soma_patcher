@@ -8,7 +8,7 @@ This patcher also resolves a throttling bug in which many textures would load in
 
 Run `patcher.exe` in the root directory of your SOMA install. Make sure `Soma.exe` and `Soma_NoSteam.exe` are present.
 
-Currently only supports Steam installs.
+Currently only supports Steam installs. Theoretically would work on the GOG version, but this is untested.
 
 ## Building on Windows
 
