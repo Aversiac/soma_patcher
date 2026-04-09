@@ -10,4 +10,16 @@ Run `patcher.exe` in the root directory of your SOMA install. Make sure `Soma.ex
 
 Currently only supports Steam installs.
 
-## Build
+# Build
+
+## Windows
+
+- Ensure you have `Visual Studio 2017+` installed.
+  
+- Open Visual Studio, and then choose 'Open a local folder'.
+  
+- Run the build the usual VS way (`Ctrl + B`) or navigate to the `CMakeLists.txt` file and save it.
+
+## Linux
+
+- Run `build.py`, ensure you have `Ninja` installed.
