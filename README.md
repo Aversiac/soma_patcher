@@ -4,17 +4,15 @@ This patcher fixes game-breaking bugs which severely limit map complexity in HPL
 
 Without the patch, the game will crash shortly after loading saves on larger maps. This is due to an error in the texture streaming/allocation system, in which the engine overflows a `2048` slot ring buffer and returns a null/garbage ptr. 
 
-The solution is to add a simple ring guard at a few callsites within the application. To do this, the patcher splices in a small amount of machine code at the problematic areas, permanently modifying the executable until the game is reinstalled. This also resolves a throttling/streaming bug, which causes many textures to load in at low resolution (or sometimes not at all).
+The solution is to add a simple ring guard at a few callsites within the application. To do this, the patcher splices in a small amount of machine code at the problematic areas, permanently modifying the executable until the game is reinstalled. 
+
+This also resolves a throttling/streaming bug, which causes many textures to load in at low resolution (or sometimes not at all).
 
 ## Usage Instructions
 
 Run `patcher.exe` in the root directory of your SOMA install. Make sure `Soma.exe` and `Soma_NoSteam.exe` are present.
 
 Currently only supports Steam installs. Theoretically should work for the GOG version, but this is untested.
-
-### Debug
-
-For debug info/error logging, run `patcher.exe` via Terminal/CMD. 
 
 ## Build
 
