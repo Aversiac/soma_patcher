@@ -1,0 +1,6 @@
+* linguist-detectable=false
+
+data/bin/shaders/*.glsl linguist-detectable=true
+src/*.h linguist-detectable=true
+src/*.cpp linguist-detectable=true
+src/*.hpp linguist-detectable=true
