@@ -11,8 +11,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Target + Sources
 # ──────────────────────────────────────────────────────────────
 file(GLOB_RECURSE PATCHER_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp")
-add_executable(patcher ${PATCHER_SRC})
+add_executable(SomaPatcher ${PATCHER_SRC})
 
-target_include_directories(patcher PRIVATE
+target_include_directories(SomaPatcher PRIVATE
     "${CMAKE_SOURCE_DIR}/src"
 )

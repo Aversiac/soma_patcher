@@ -342,7 +342,7 @@ static void patch_file(const PatchSet& patch, const std::string& src_path, const
 		if (std::memcmp(data.data() + ro, expected.data, cfg.len) != 0)
 		{
 			std::ostringstream oss;
-			oss << "[" << patch.label << "] Unexpected bytes at " << cfg.name << " 0x" << std::hex << cfg.site;
+			oss << "[" << patch.label << "] Executable is invalid. Ensure you have the original, unmodified executables.\nUnexpected bytes at " << cfg.name << " 0x" << std::hex << cfg.site;
 			throw std::runtime_error(oss.str());
 		}
 	}
@@ -375,8 +375,6 @@ static void patch_file(const PatchSet& patch, const std::string& src_path, const
 
 	checksum_pe(data);
 	write_all_bytes(dst_path, data);
-	std::cout << "Patch successful! Press any key to exit...\n";
-	std::cin.get();
 }
 
 int main(int argc, char* argv[]) 
@@ -401,6 +399,9 @@ int main(int argc, char* argv[])
 			patch_file(PATCH_STEAM, "Soma.exe", "Soma.exe");
 		}
 
+		std::cout << "All fixes completed without errors!\n";
+		std::cout << "Press [ENTER] to exit...\n";
+		std::cin.get();
 		return 0;
 	}
 	catch (const std::exception& e)
