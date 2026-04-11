@@ -12,9 +12,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # ──────────────────────────────────────────────────────────────
 file(GLOB_RECURSE PATCHER_SRC CONFIGURE_DEPENDS "${CMAKE_SOURCE_DIR}/src/*.cpp")
 add_executable(SomaPatcher ${PATCHER_SRC})
+add_executable(SomaPatcher_Overwriting ${PATCHER_SRC})
 
 target_include_directories(SomaPatcher PRIVATE
     "${CMAKE_SOURCE_DIR}/src"
 )
 
-#add_compile_definitions(OVERWRITE_EXES)
+target_compile_definitions(SomaPatcher_Overwriting PRIVATE OVERWRITE_EXES)
