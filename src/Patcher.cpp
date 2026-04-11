@@ -1,15 +1,42 @@
 #include "CommonTypes.hpp"
-#include "Constants.h"
 #include <sstream>
 #include <array>
 #include <cstring>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
+
+static constexpr u64 IMAGE_BASE = 0x140000000ull;
+static constexpr u64 TEXT_RAW = 0x400ull;
+static constexpr u64 TEXT_VA = 0x1000ull;
+static constexpr u64 CAVE_RAW = 0x6528B0ull;
+static constexpr u64 CAVE_VA = IMAGE_BASE + (CAVE_RAW - TEXT_RAW + TEXT_VA);
+
+
+static const std::array<u8, 18> EXPECTED_FUNC1_SITE1 = {
+	0x8B, 0xBB, 0x00, 0xC1, 0x02, 0x00, 0x33, 0xC0, 0x48,
+	0x8D, 0x55, 0xB0, 0x81, 0xE7, 0xFF, 0x07, 0x00, 0x00
+};
+
+static const std::array<u8, 15> EXPECTED_FUNC1_SITE2 = {
+	0x8B, 0xBB, 0x00, 0xC1, 0x02, 0x00, 0x41, 0xB6,
+	0x01, 0x81, 0xE7, 0xFF, 0x07, 0x00, 0x00
+};
+
+static const std::array<u8, 23> EXPECTED_FUNC2_SITE1 = {
+	0x8B, 0xB3, 0x00, 0xC1, 0x02, 0x00, 0x44, 0x8B,
+	0x8C, 0x24, 0xB0, 0x00, 0x00, 0x00, 0x45, 0x8B,
+	0xC6, 0x81, 0xE6, 0xFF, 0x07, 0x00, 0x00
+};
+
+static const std::array<u8, 15> EXPECTED_FUNC2_SITE2 = {
+	0x8B, 0xB3, 0x00, 0xC1, 0x02, 0x00, 0x41, 0xB5,
+	0x01, 0x81, 0xE6, 0xFF, 0x07, 0x00, 0x00
+};
+
 
 struct SiteConfig {
 	const char* name;
@@ -18,20 +45,19 @@ struct SiteConfig {
 	u64 full;
 	size_t len;
 };
-
 struct ExpectedEntry {
 	const char* name;
 	const u8* data;
 	std::size_t size;
 };
 
+template <std::size_t PrefixSize>
 struct PatchSet {
 	const char* label;
-	u64 cave_raw;
 	u64 cave_va;
 	const std::array<SiteConfig, 4>* sites;
 	const std::array<ExpectedEntry, 4>* expected;
-	const std::array<u8, 15>* prefix;
+	const std::array<u8, PrefixSize>* prefix;
 };
 
 // =========================
@@ -48,12 +74,15 @@ static const std::array<SiteConfig, 4> SITES_NOSTEAM = { {
 static const std::array<u8, 18> EXPECTED_FUNC1_SITE1_NOSTEAM = {
 	0x8B, 0xBB, 0x00, 0xC1, 0x02, 0x00, 0x33, 0xC0, 0x48, 0x8D, 0x55, 0xB0, 0x81, 0xE7, 0xFF, 0x07, 0x00, 0x00
 };
+
 static const std::array<u8, 15> EXPECTED_FUNC1_SITE2_NOSTEAM = {
 	0x8B, 0xBB, 0x00, 0xC1, 0x02, 0x00, 0x41, 0xB6, 0x01, 0x81, 0xE7, 0xFF, 0x07, 0x00, 0x00
 };
+
 static const std::array<u8, 23> EXPECTED_FUNC2_SITE1_NOSTEAM = {
 	0x8B, 0xB3, 0x00, 0xC1, 0x02, 0x00, 0x44, 0x8B, 0x8C, 0x24, 0xB0, 0x00, 0x00, 0x00, 0x45, 0x8B, 0xC6, 0x81, 0xE6, 0xFF, 0x07, 0x00, 0x00
 };
+
 static const std::array<u8, 15> EXPECTED_FUNC2_SITE2_NOSTEAM = {
 	0x8B, 0xB3, 0x00, 0xC1, 0x02, 0x00, 0x41, 0xB5, 0x01, 0x81, 0xE6, 0xFF, 0x07, 0x00, 0x00
 };
@@ -65,10 +94,11 @@ static const std::array<ExpectedEntry, 4> EXPECTED_NOSTEAM = { {
 	{ "func2_site2", EXPECTED_FUNC2_SITE2_NOSTEAM.data(), EXPECTED_FUNC2_SITE2_NOSTEAM.size() },
 } };
 
-static const std::array<u8, 15> PREFIX_NOSTEAM = {
-	0x48, 0x8B, 0x83, 0x00, 0xC1, 0x02, 0x00,
-	0x48, 0x2B, 0x83, 0x08, 0xC1, 0x02, 0x00,
-};
+static constexpr auto PREFIX_NOSTEAM = std::to_array<u8>({
+	0x48, 0x8B, 0x83, 0x00, 0xC1, 0x02, 0x00, // mov rax,[rbx+2c100]
+	0x48, 0x2B, 0x83, 0x08, 0xC1, 0x02, 0x00, // sub rax,[rbx+2c108]
+//	0x48, 0x3D, 0x00, 0x08, 0x00, 0x00        // cmp rax,0x800
+});
 
 // =========================
 // Steam patch data
@@ -84,12 +114,15 @@ static const std::array<SiteConfig, 4> SITES_STEAM = { {
 static const std::array<u8, 18> EXPECTED_FUNC1_SITE1_STEAM = {
 	0x8B, 0xBB, 0x00, 0xC1, 0x02, 0x00, 0x33, 0xC0, 0x48, 0x8D, 0x55, 0xB0, 0x81, 0xE7, 0xFF, 0x07, 0x00, 0x00
 };
+
 static const std::array<u8, 15> EXPECTED_FUNC1_SITE2_STEAM = {
 	0x8B, 0xBB, 0x00, 0xC1, 0x02, 0x00, 0x41, 0xB6, 0x01, 0x81, 0xE7, 0xFF, 0x07, 0x00, 0x00
 };
+
 static const std::array<u8, 23> EXPECTED_FUNC2_SITE1_STEAM = {
 	0x8B, 0xB3, 0x00, 0xC1, 0x02, 0x00, 0x44, 0x8B, 0x8C, 0x24, 0xB0, 0x00, 0x00, 0x00, 0x45, 0x8B, 0xC6, 0x81, 0xE6, 0xFF, 0x07, 0x00, 0x00
 };
+
 static const std::array<u8, 15> EXPECTED_FUNC2_SITE2_STEAM = {
 	0x8B, 0xB3, 0x00, 0xC1, 0x02, 0x00, 0x41, 0xB5, 0x01, 0x81, 0xE6, 0xFF, 0x07, 0x00, 0x00
 };
@@ -101,25 +134,23 @@ static const std::array<ExpectedEntry, 4> EXPECTED_STEAM = { {
 	{ "func2_site2", EXPECTED_FUNC2_SITE2_STEAM.data(), EXPECTED_FUNC2_SITE2_STEAM.size() },
 } };
 
-static const std::array<u8, 15> PREFIX_STEAM = {
-	0x48, 0x8B, 0x83, 0x00, 0xC1, 0x02, 0x00,
-	0x48, 0x2B, 0x83, 0x08, 0xC1, 0x02, 0x00,
-};
+static constexpr auto PREFIX_STEAM = std::to_array<u8>({
+	0x48, 0x8B, 0x83, 0x00, 0xC1, 0x02, 0x00, // mov rax,[rbx+2c100]
+	0x48, 0x2B, 0x83, 0x08, 0xC1, 0x02, 0x00  // sub rax,[rbx+2c108]
+});
 
 // =========================
 
-static const PatchSet PATCH_NOSTEAM = {
+static const PatchSet<PREFIX_NOSTEAM.size()> PATCH_NOSTEAM = {
 	"NoSteam",
-	0x6528B0ull,
 	IMAGE_BASE + (0x6528B0ull - TEXT_RAW + TEXT_VA),
 	&SITES_NOSTEAM,
 	&EXPECTED_NOSTEAM,
 	&PREFIX_NOSTEAM
 };
 
-static const PatchSet PATCH_STEAM = {
+static const PatchSet<PREFIX_STEAM.size()> PATCH_STEAM = {
 	"Steam",
-	0x683CB0ull,
 	IMAGE_BASE + (0x683CB0ull - TEXT_RAW + TEXT_VA),
 	&SITES_STEAM,
 	&EXPECTED_STEAM,
@@ -131,7 +162,8 @@ struct TrampolineBlob {
 	std::vector<u8> code;
 };
 
-static const ExpectedEntry& get_expected(const PatchSet& patch, const std::string& name)
+template <std::size_t PrefixSize>
+static const ExpectedEntry& get_expected(const PatchSet<PrefixSize>& patch, const std::string& name)
 {
 	for (const auto& e : *patch.expected)
 	{
@@ -151,9 +183,7 @@ static std::array<u8, 4> rel32(u64 src_va_after, u64 dst_va)
 {
 	const i64 disp = static_cast<i64>(dst_va) - static_cast<i64>(src_va_after);
 	if (disp < INT32_MIN || disp > INT32_MAX)
-	{
 		throw std::runtime_error("rel32 out of range");
-	}
 
 	const i32 d = static_cast<i32>(disp);
 	return {
@@ -231,56 +261,57 @@ static void checksum_pe(std::vector<u8>& data)
 	write_u32_le(data, checksum_off, csum);
 }
 
-static std::pair<std::vector<TrampolineBlob>, std::vector<u64>> build_trampolines(const PatchSet& patch)
+template <std::size_t PrefixSize>
+static std::pair<std::vector<TrampolineBlob>, std::vector<u64>> build_trampolines(const PatchSet<PrefixSize>& patch)
 {
 	u64 cur_va = patch.cave_va;
 	std::vector<TrampolineBlob> out;
 	std::vector<u64> tramp_vas;
 
 	auto emit = [&](const std::vector<u8>& code) -> u64
-		{
-			const u64 va = cur_va;
-			out.push_back({ va, code });
-			cur_va += static_cast<u64>(code.size());
-			if ((cur_va % 8) != 0)
-				cur_va += 8 - (cur_va % 8);
-			return va;
-		};
+	{
+		const u64 va = cur_va;
+		out.push_back({ va, code });
+		cur_va += static_cast<u64>(code.size());
+		if ((cur_va % 8) != 0)
+			cur_va += 8 - (cur_va % 8);
+		return va;
+	};
 
 	auto mk = [&](const ExpectedEntry& original, u64 back_va, u64 full_va) -> u64
-		{
-			const u64 base = cur_va;
-			std::vector<u8> code;
+	{
+		const u64 base = cur_va;
+		std::vector<u8> code;
 
-			code.insert(code.end(), patch.prefix->begin(), patch.prefix->end());
+		code.insert(code.end(), patch.prefix->begin(), patch.prefix->end());
 
-			const std::size_t jae_pos = code.size();
-			code.push_back(0x0F);
-			code.push_back(0x83);
-			code.insert(code.end(), 4, 0x00);
+		const std::size_t jae_pos = code.size();
+		code.push_back(0x0F);
+		code.push_back(0x83);
+		code.insert(code.end(), 4, 0x00);
 
-			code.insert(code.end(), original.data, original.data + original.size);
+		code.insert(code.end(), original.data, original.data + original.size);
 
-			const std::size_t back_pos = code.size();
-			code.push_back(0xE9);
-			code.insert(code.end(), 4, 0x00);
+		const std::size_t back_pos = code.size();
+		code.push_back(0xE9);
+		code.insert(code.end(), 4, 0x00);
 
-			const std::size_t full_off = code.size();
-			const u64 full_branch_va = base + static_cast<u64>(full_off);
-			code.push_back(0xE9);
-			code.insert(code.end(), 4, 0x00);
+		const std::size_t full_off = code.size();
+		const u64 full_branch_va = base + static_cast<u64>(full_off);
+		code.push_back(0xE9);
+		code.insert(code.end(), 4, 0x00);
 
-			const auto jae_bytes = make_jae(base + jae_pos, full_branch_va);
-			std::memcpy(code.data() + jae_pos, jae_bytes.data(), jae_bytes.size());
+		const auto jae_bytes = make_jae(base + jae_pos, full_branch_va);
+		std::memcpy(code.data() + jae_pos, jae_bytes.data(), jae_bytes.size());
 
-			const auto back_bytes = make_jmp(base + back_pos, back_va);
-			std::memcpy(code.data() + back_pos, back_bytes.data(), back_bytes.size());
+		const auto back_bytes = make_jmp(base + back_pos, back_va);
+		std::memcpy(code.data() + back_pos, back_bytes.data(), back_bytes.size());
 
-			const auto full_bytes = make_jmp(full_branch_va, full_va);
-			std::memcpy(code.data() + full_off, full_bytes.data(), full_bytes.size());
+		const auto full_bytes = make_jmp(full_branch_va, full_va);
+		std::memcpy(code.data() + full_off, full_bytes.data(), full_bytes.size());
 
-			return emit(code);
-		};
+		return emit(code);
+	};
 
 	tramp_vas.push_back(mk(get_expected(patch, "func1_site1"), (*patch.sites)[0].back, (*patch.sites)[0].full));
 	tramp_vas.push_back(mk(get_expected(patch, "func1_site2"), (*patch.sites)[1].back, (*patch.sites)[1].full));
@@ -324,7 +355,8 @@ static void write_all_bytes(const std::string& path, const std::vector<u8>& data
 		throw std::runtime_error("Failed to write output file");
 }
 
-static void patch_file(const PatchSet& patch, const std::string& src_path, const std::string& dst_path)
+template <std::size_t PrefixSize>
+static void patch_file(const PatchSet<PrefixSize>& patch, const std::string& src_path, const std::string& dst_path)
 {
 	std::vector<u8> data = read_all_bytes(src_path);
 
@@ -342,7 +374,7 @@ static void patch_file(const PatchSet& patch, const std::string& src_path, const
 		if (std::memcmp(data.data() + ro, expected.data, cfg.len) != 0)
 		{
 			std::ostringstream oss;
-			oss << "[" << patch.label << "] Executable is invalid. Ensure you have the original, unmodified executables.\nUnexpected bytes at " << cfg.name << " 0x" << std::hex << cfg.site;
+			oss << "[" << patch.label << "] Unexpected bytes at " << cfg.name << " 0x" << std::hex << cfg.site;
 			throw std::runtime_error(oss.str());
 		}
 	}
@@ -379,6 +411,7 @@ static void patch_file(const PatchSet& patch, const std::string& src_path, const
 
 int main(int argc, char* argv[]) 
 {
+	std::string filename = "";
 	try
 	{
 		std::cout << "Welcome to the SOMA Patcher!\n";
@@ -395,8 +428,14 @@ int main(int argc, char* argv[])
 
 		//if (input == "y" || input == "Y")
 		{
+#ifdef OVERWRITE_EXES
 			patch_file(PATCH_NOSTEAM, "Soma_NoSteam.exe", "Soma_NoSteam.exe");
 			patch_file(PATCH_STEAM, "Soma.exe", "Soma.exe");
+#else
+			patch_file(PATCH_NOSTEAM, "Soma_NoSteam.exe", "Soma_NoSteam_patched.exe");
+			patch_file(PATCH_STEAM, "Soma.exe", "Soma_patched.exe");
+#endif
+
 		}
 
 		std::cout << "All fixes completed without errors!\n";

@@ -16,3 +16,5 @@ add_executable(SomaPatcher ${PATCHER_SRC})
 target_include_directories(SomaPatcher PRIVATE
     "${CMAKE_SOURCE_DIR}/src"
 )
+
+#add_compile_definitions(OVERWRITE_EXES)
