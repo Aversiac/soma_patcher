@@ -28,4 +28,4 @@ Requires `Visual Studio 2017` or later.
 
 Requires `Ninja` (https://github.com/ninja-build/ninja) and `Python 3.9` or later.
 
-- Run `build.py` from the console.
+- Run `build.py` from a terminal.
